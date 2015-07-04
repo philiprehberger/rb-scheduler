@@ -1,8 +1,13 @@
 # philiprehberger-scheduler
 
 [![Gem Version](https://badge.fury.io/rb/philiprehberger-scheduler.svg)](https://badge.fury.io/rb/philiprehberger-scheduler)
+[![License](https://img.shields.io/github/license/philiprehberger/rb-scheduler)](LICENSE)
 
 Lightweight in-process task scheduler with cron and interval support for Ruby.
+
+## Requirements
+
+- Ruby >= 3.1
 
 ## Installation
 
