@@ -1,6 +1,7 @@
 # philiprehberger-scheduler
 
-[![Gem Version](https://badge.fury.io/rb/philiprehberger-scheduler.svg)](https://badge.fury.io/rb/philiprehberger-scheduler)
+[![Tests](https://github.com/philiprehberger/rb-scheduler/actions/workflows/ci.yml/badge.svg)](https://github.com/philiprehberger/rb-scheduler/actions/workflows/ci.yml)
+[![Gem Version](https://badge.fury.io/rb/philiprehberger-scheduler.svg)](https://rubygems.org/gems/philiprehberger-scheduler)
 [![License](https://img.shields.io/github/license/philiprehberger/rb-scheduler)](LICENSE)
 
 Lightweight in-process task scheduler with cron and interval support for Ruby.
@@ -19,7 +20,7 @@ gem 'philiprehberger-scheduler'
 
 Or install directly:
 
-```sh
+```bash
 gem install philiprehberger-scheduler
 ```
 
@@ -84,12 +85,12 @@ Returns a snapshot of all scheduled jobs.
 
 ## Development
 
-```sh
+```bash
 bundle install
-bundle exec rake spec
-bundle exec rake rubocop
+bundle exec rspec
+bundle exec rubocop
 ```
 
 ## License
 
-MIT License. See [LICENSE](LICENSE) for details.
+MIT
