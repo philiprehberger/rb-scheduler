@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Expand README with detailed API documentation and usage examples
 
-## [0.1.2]
+## [0.1.2] - 2026-03-16
 
 ### Changed
 - Add License badge to README
