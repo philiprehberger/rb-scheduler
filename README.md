@@ -15,7 +15,7 @@ Lightweight in-process task scheduler with cron and interval support for Ruby
 Add to your Gemfile:
 
 ```ruby
-gem 'philiprehberger-scheduler'
+gem "philiprehberger-scheduler"
 ```
 
 Or install directly:
