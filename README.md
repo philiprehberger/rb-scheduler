@@ -27,7 +27,7 @@ gem install philiprehberger-scheduler
 ## Usage
 
 ```ruby
-require 'philiprehberger/scheduler'
+require "philiprehberger/scheduler"
 
 scheduler = Philiprehberger::Scheduler.new
 
@@ -42,7 +42,7 @@ scheduler.start
 Schedule recurring jobs using human-readable duration strings or numeric seconds.
 
 ```ruby
-require 'philiprehberger/scheduler'
+require "philiprehberger/scheduler"
 
 scheduler = Philiprehberger::Scheduler.new
 
@@ -57,7 +57,7 @@ scheduler.every(120)   { puts 'Every 120 seconds' }
 Schedule jobs using standard 5-field cron expressions. Supported syntax includes wildcards (`*`), specific values, ranges (`1-5`), steps (`*/15`), range steps (`1-30/5`), and comma-separated lists (`1,15,30`).
 
 ```ruby
-require 'philiprehberger/scheduler'
+require "philiprehberger/scheduler"
 
 scheduler = Philiprehberger::Scheduler.new
 
@@ -71,7 +71,7 @@ scheduler.cron('0 0 1 * *')    { puts 'First of the month at midnight' }
 By default, jobs can run concurrently even if a previous execution is still in progress. Set `overlap: false` to skip an execution when the previous one has not yet finished.
 
 ```ruby
-require 'philiprehberger/scheduler'
+require "philiprehberger/scheduler"
 
 scheduler = Philiprehberger::Scheduler.new
 
@@ -88,7 +88,7 @@ scheduler.start
 Use `#jobs` to retrieve a snapshot of all registered jobs at any time. Each returned `Job` exposes its configuration and runtime state.
 
 ```ruby
-require 'philiprehberger/scheduler'
+require "philiprehberger/scheduler"
 
 scheduler = Philiprehberger::Scheduler.new
 
@@ -111,7 +111,7 @@ end
 Each job runs in its own thread. If a job raises an exception, only that thread is affected -- other jobs and the scheduler itself continue running. The `Job#execute` method uses an `ensure` block to reset the running state and record the last run time regardless of whether the block succeeds or raises.
 
 ```ruby
-require 'philiprehberger/scheduler'
+require "philiprehberger/scheduler"
 
 scheduler = Philiprehberger::Scheduler.new
 
@@ -133,7 +133,7 @@ If you need guaranteed error visibility, wrap your job block in a `begin/rescue`
 The scheduler follows a simple lifecycle: create, register jobs, start, and stop.
 
 ```ruby
-require 'philiprehberger/scheduler'
+require "philiprehberger/scheduler"
 
 # 1. Create
 scheduler = Philiprehberger::Scheduler.new
