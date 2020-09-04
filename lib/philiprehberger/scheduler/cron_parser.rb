@@ -36,7 +36,7 @@ module Philiprehberger
         field.split(',').flat_map { |token| parse_token(token, range) }.uniq.sort
       end
 
-      def parse_token(token, range) # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
+      def parse_token(token, range)
         case token
         when '*'
           range.to_a
