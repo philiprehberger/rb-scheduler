@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-03-28
+
+### Added
+- Job dependencies via `depends_on:` option to run jobs only after a named dependency completes
+- Conditional scheduling via `if:` option to skip execution based on a lambda condition
+- Job result chaining via `input_from:` option to pass output of one job as input to the next
+- Timezone support for cron expressions via `timezone:` option with named timezones and UTC offsets
+- Job persistence with `save_state` and `load_state` methods for crash recovery
+- Distributed scheduling awareness with leader election via file lock (`enable_leader_election`)
+- Job naming via `name:` option for interval and cron jobs
+
 ## [0.1.8] - 2026-03-26
 
 ### Changed
