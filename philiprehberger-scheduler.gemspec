@@ -12,15 +12,15 @@ Gem::Specification.new do |spec|
   spec.description = 'A lightweight in-process task scheduler for Ruby. ' \
                      'Schedule recurring tasks using simple intervals or cron ' \
                      'expressions with overlap prevention and graceful shutdown.'
-  spec.homepage = 'https://github.com/philiprehberger/rb-scheduler'
+  spec.homepage      = 'https://philiprehberger.com/open-source-packages/ruby/philiprehberger-scheduler'
   spec.license = 'MIT'
   spec.required_ruby_version = '>= 3.1.0'
 
   spec.metadata = {
     'homepage_uri' => spec.homepage,
-    'source_code_uri' => spec.homepage,
-    'changelog_uri' => "#{spec.homepage}/blob/main/CHANGELOG.md",
-    'bug_tracker_uri' => "#{spec.homepage}/issues",
+    'source_code_uri' => 'https://github.com/philiprehberger/rb-scheduler',
+    'changelog_uri' => 'https://github.com/philiprehberger/rb-scheduler/blob/main/CHANGELOG.md',
+    'bug_tracker_uri' => 'https://github.com/philiprehberger/rb-scheduler/issues',
     'rubygems_mfa_required' => 'true'
   }
 
