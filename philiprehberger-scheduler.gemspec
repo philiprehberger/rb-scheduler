@@ -12,7 +12,7 @@ Gem::Specification.new do |spec|
   spec.description = 'A lightweight in-process task scheduler for Ruby. ' \
                      'Schedule recurring tasks using simple intervals or cron ' \
                      'expressions with overlap prevention and graceful shutdown.'
-  spec.homepage      = 'https://philiprehberger.com/open-source-packages/ruby/philiprehberger-scheduler'
+  spec.homepage = 'https://philiprehberger.com/open-source-packages/ruby/philiprehberger-scheduler'
   spec.license = 'MIT'
   spec.required_ruby_version = '>= 3.1.0'
 
