@@ -5,9 +5,10 @@ module Philiprehberger
     class Runner
       TICK = 0.25
 
-      def initialize(jobs, mutex)
+      def initialize(jobs, mutex, error_handler: nil)
         @jobs = jobs
         @mutex = mutex
+        @error_handler = error_handler
         @thread = nil
         @running = false
       end
@@ -52,7 +53,12 @@ module Philiprehberger
           next if dependency_pending?(job, jobs_by_name)
 
           input = resolve_input(job, jobs_by_name)
-          Thread.new { job.execute(input) }
+          handler = @error_handler
+          Thread.new do
+            job.execute(input)
+          rescue StandardError => e
+            handler&.call(job, e)
+          end
         end
       end
 

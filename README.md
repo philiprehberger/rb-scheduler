@@ -224,22 +224,26 @@ end
 
 ### Error Handling
 
-Each job runs in its own thread. If a job raises an exception, only that thread is affected -- other jobs and the scheduler itself continue running. The `Job#execute` method uses an `ensure` block to reset the running state and record the last run time regardless of whether the block succeeds or raises.
+Each job runs in its own thread. If a job raises an exception, only that thread is affected -- other jobs and the scheduler itself continue running. Register an `on_error` callback to observe failures across all jobs without wrapping each block in a rescue:
 
 ```ruby
 require "philiprehberger/scheduler"
 
 scheduler = Philiprehberger::Scheduler.new
 
-scheduler.every('10s') do
-  begin
-    perform_risky_operation
-  rescue => e
-    MyLogger.error("Job failed: #{e.message}")
-  end
+scheduler.on_error do |job, error|
+  MyLogger.error("[#{job.name}] #{error.class}: #{error.message}")
 end
 
+scheduler.every('10s', name: 'risky') { perform_risky_operation }
 scheduler.start
+```
+
+You can also inspect the most recent error on any job:
+
+```ruby
+job = scheduler.jobs.find { |j| j.name == 'risky' }
+job.last_error  # => #<RuntimeError: something went wrong> or nil
 ```
 
 ### Scheduler Lifecycle
@@ -281,6 +285,7 @@ Jobs can be added both before and after calling `#start`. The scheduler checks f
 | `#jobs` | -- | `Array<Job>` | Returns a duplicated snapshot of all registered jobs |
 | `#save_state(path)` | `path` -- `String` (file path) | `self` | Saves named job state to a JSON file |
 | `#load_state(path)` | `path` -- `String` (file path) | `self` | Restores job state from a JSON file |
+| `#on_error(&block)` | Block receiving `(job, error)` | `self` | Registers an error callback for job failures |
 | `#enable_leader_election(lock_path:)` | `lock_path:` -- `String` (file path for lock) | `self` | Enables file-based leader election |
 | `#leader?` | -- | `Boolean` | Returns `true` if this instance holds the leader lock |
 | `#acquire_leadership` | -- | `Boolean` | Attempts to acquire the leader file lock |
@@ -299,6 +304,7 @@ Jobs can be added both before and after calling `#start`. The scheduler checks f
 | `#due?(now)` | `Boolean` | Whether the job is due for execution at the given time |
 | `#last_run` | `Time` or `nil` | Timestamp of the most recent execution |
 | `#last_result` | `Object` or `nil` | Return value from the most recent execution |
+| `#last_error` | `StandardError` or `nil` | Most recent exception (cleared on success) |
 | `#running` | `Boolean` | Whether the job is currently executing |
 | `#depends_on` | `String` or `nil` | Name of the dependency job |
 | `#input_from` | `String` or `nil` | Name of the source job for result chaining |

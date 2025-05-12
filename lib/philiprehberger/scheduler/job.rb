@@ -4,7 +4,7 @@ module Philiprehberger
   class Scheduler
     class Job
       attr_reader :callable, :interval, :cron, :options, :name, :depends_on, :input_from, :condition, :timezone
-      attr_accessor :last_run, :running, :last_result
+      attr_accessor :last_run, :running, :last_result, :last_error
 
       def initialize(callable:, interval: nil, cron: nil, **options)
         @callable = callable
@@ -19,6 +19,7 @@ module Philiprehberger
         @last_run = nil
         @running = false
         @last_result = nil
+        @last_error = nil
       end
 
       def overlap?
@@ -45,12 +46,16 @@ module Philiprehberger
 
       def execute(input = nil)
         @running = true
+        @last_error = nil
         @last_result = if @input_from && !input.nil?
                          @callable.call(input)
                        else
                          @callable.call
                        end
         @last_result
+      rescue StandardError => e
+        @last_error = e
+        raise
       ensure
         @running = false
         @last_run = Time.now
@@ -63,7 +68,8 @@ module Philiprehberger
           'cron_expression' => @cron&.expression,
           'overlap' => overlap?,
           'last_run' => @last_run&.iso8601,
-          'timezone' => @timezone
+          'timezone' => @timezone,
+          'last_error' => @last_error&.message
         }
       end
 

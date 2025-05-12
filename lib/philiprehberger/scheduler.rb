@@ -15,10 +15,16 @@ module Philiprehberger
     def initialize
       @jobs = []
       @mutex = Mutex.new
-      @runner = Runner.new(@jobs, @mutex)
+      @error_handler = nil
+      @runner = nil
       @leader_lock_path = nil
       @leader_lock_file = nil
       @is_leader = false
+    end
+
+    def on_error(&block)
+      @error_handler = block
+      self
     end
 
     def every(interval, name: nil, overlap: true, depends_on: nil, input_from: nil, if: nil, &block)
@@ -56,18 +62,19 @@ module Philiprehberger
         return self
       end
 
+      @runner = Runner.new(@jobs, @mutex, error_handler: @error_handler)
       @runner.start
       self
     end
 
     def stop(timeout = 5)
-      @runner.stop(timeout)
+      @runner&.stop(timeout)
       release_leadership if @leader_lock_path
       self
     end
 
     def running?
-      @runner.running?
+      @runner&.running? || false
     end
 
     def jobs
