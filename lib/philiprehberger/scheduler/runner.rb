@@ -54,10 +54,16 @@ module Philiprehberger
 
           input = resolve_input(job, jobs_by_name)
           handler = @error_handler
+          shared_jobs = @jobs
+          shared_mutex = @mutex
           Thread.new do
             job.execute(input)
           rescue StandardError => e
             handler&.call(job, e)
+          ensure
+            if job.respond_to?(:run_at?) && job.run_at?
+              shared_mutex.synchronize { shared_jobs.delete(job) }
+            end
           end
         end
       end

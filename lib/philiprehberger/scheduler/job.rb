@@ -3,13 +3,15 @@
 module Philiprehberger
   class Scheduler
     class Job
-      attr_reader :callable, :interval, :cron, :options, :name, :depends_on, :input_from, :condition, :timezone
-      attr_accessor :last_run, :running, :last_result, :last_error
+      attr_reader :callable, :interval, :cron, :run_at, :options, :name, :depends_on,
+                  :input_from, :condition, :timezone
+      attr_accessor :last_run, :running, :last_result, :last_error, :paused
 
-      def initialize(callable:, interval: nil, cron: nil, **options)
+      def initialize(callable:, interval: nil, cron: nil, run_at: nil, **options)
         @callable = callable
         @interval = interval
         @cron = cron
+        @run_at = run_at
         @name = options.delete(:name)
         @depends_on = options.delete(:depends_on)
         @input_from = options.delete(:input_from)
@@ -20,10 +22,15 @@ module Philiprehberger
         @running = false
         @last_result = nil
         @last_error = nil
+        @paused = false
       end
 
       def overlap?
         @options[:overlap]
+      end
+
+      def paused?
+        @paused == true
       end
 
       def interval?
@@ -34,10 +41,16 @@ module Philiprehberger
         !@cron.nil?
       end
 
+      def run_at?
+        !@run_at.nil?
+      end
+
       def due?(now)
+        return false if paused?
         return false if @condition && !@condition.call
 
         effective_now = apply_timezone(now)
+        return due_by_run_at?(now) if run_at?
         return due_by_interval?(now) if interval?
         return due_by_cron?(effective_now) if cron?
 
@@ -69,12 +82,14 @@ module Philiprehberger
           'overlap' => overlap?,
           'last_run' => @last_run&.iso8601,
           'timezone' => @timezone,
-          'last_error' => @last_error&.message
+          'last_error' => @last_error&.message,
+          'paused' => paused?
         }
       end
 
       def restore_state(state)
         @last_run = Time.parse(state['last_run']) if state['last_run']
+        @paused = state['paused'] == true if state.key?('paused')
       end
 
       private
@@ -124,6 +139,12 @@ module Philiprehberger
         return false if @last_run && (now - @last_run) < 60
 
         @cron.matches?(now)
+      end
+
+      def due_by_run_at?(now)
+        return false unless @last_run.nil?
+
+        now >= @run_at
       end
     end
   end

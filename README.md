@@ -246,6 +246,62 @@ job = scheduler.jobs.find { |j| j.name == 'risky' }
 job.last_error  # => #<RuntimeError: something went wrong> or nil
 ```
 
+### Cancelling Jobs
+
+Remove a named job from the scheduler at any time. Cancelled jobs will not fire again. Returns `true` when a job was removed and `false` when no job with that name exists.
+
+```ruby
+require "philiprehberger/scheduler"
+
+scheduler = Philiprehberger::Scheduler.new
+
+scheduler.every('10s', name: 'heartbeat') { ping }
+scheduler.every('1h', name: 'cleanup')   { clean_temp }
+
+scheduler.start
+
+scheduler.cancel('cleanup')  #=> true
+scheduler.cancel('unknown')  #=> false
+scheduler.job_count          #=> 1
+```
+
+### Pausing and Resuming Jobs
+
+Temporarily stop a named job from firing without removing it. Paused jobs can be resumed later and keep their schedule position.
+
+```ruby
+require "philiprehberger/scheduler"
+
+scheduler = Philiprehberger::Scheduler.new
+
+scheduler.every('5m', name: 'sync') { perform_sync }
+scheduler.start
+
+scheduler.pause('sync')         #=> true
+scheduler.paused?('sync')       #=> true
+
+# ...do maintenance...
+
+scheduler.resume('sync')        #=> true
+scheduler.paused?('sync')       #=> false
+```
+
+### One-Shot Scheduling with `run_at`
+
+Schedule a block to fire a single time at a specific `Time`. The job is automatically removed after it runs.
+
+```ruby
+require "philiprehberger/scheduler"
+
+scheduler = Philiprehberger::Scheduler.new
+
+scheduler.run_at(Time.now + 3600, name: 'reminder') do
+  send_reminder_email
+end
+
+scheduler.start
+```
+
 ### Scheduler Lifecycle
 
 The scheduler follows a simple lifecycle: create, register jobs, start, and stop.
@@ -283,6 +339,13 @@ Jobs can be added both before and after calling `#start`. The scheduler checks f
 | `#stop(timeout)` | `timeout` -- `Numeric` (default `5`, seconds to wait for thread shutdown) | `self` | Gracefully stops the scheduler |
 | `#running?` | -- | `Boolean` | Returns `true` if the scheduler background thread is alive |
 | `#jobs` | -- | `Array<Job>` | Returns a duplicated snapshot of all registered jobs |
+| `#job_count` | -- | `Integer` | Returns the number of registered jobs |
+| `#find_job(name)` | `name` -- `String` | `Job` or `nil` | Returns the job with the given name, or `nil` |
+| `#cancel(name)` | `name` -- `String` | `Boolean` | Removes the named job; returns `true` on success |
+| `#pause(name)` | `name` -- `String` | `Boolean` | Pauses the named job; returns `true` on success |
+| `#resume(name)` | `name` -- `String` | `Boolean` | Resumes a paused job; returns `true` on success |
+| `#paused?(name)` | `name` -- `String` | `Boolean` | Returns `true` if the named job is paused |
+| `#run_at(time, **opts, &block)` | `time` -- `Time`; `name:` -- `String` | `Job` | Schedules a one-shot job at the given `Time` |
 | `#save_state(path)` | `path` -- `String` (file path) | `self` | Saves named job state to a JSON file |
 | `#load_state(path)` | `path` -- `String` (file path) | `self` | Restores job state from a JSON file |
 | `#on_error(&block)` | Block receiving `(job, error)` | `self` | Registers an error callback for job failures |
@@ -298,9 +361,12 @@ Jobs can be added both before and after calling `#start`. The scheduler checks f
 | `#name` | `String` or `nil` | The job name, or `nil` if unnamed |
 | `#interval` | `Float` or `nil` | The interval in seconds, or `nil` for cron jobs |
 | `#cron` | `CronParser` or `nil` | The parsed cron expression, or `nil` for interval jobs |
+| `#run_at` | `Time` or `nil` | Target time for one-shot jobs, or `nil` |
 | `#overlap?` | `Boolean` | Whether concurrent executions are allowed |
 | `#interval?` | `Boolean` | Returns `true` if this is an interval-based job |
 | `#cron?` | `Boolean` | Returns `true` if this is a cron-based job |
+| `#run_at?` | `Boolean` | Returns `true` if this is a one-shot `run_at` job |
+| `#paused?` | `Boolean` | Returns `true` if the job is paused |
 | `#due?(now)` | `Boolean` | Whether the job is due for execution at the given time |
 | `#last_run` | `Time` or `nil` | Timestamp of the most recent execution |
 | `#last_result` | `Object` or `nil` | Return value from the most recent execution |

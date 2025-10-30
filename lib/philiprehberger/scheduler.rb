@@ -81,6 +81,62 @@ module Philiprehberger
       @mutex.synchronize { @jobs.dup }
     end
 
+    def job_count
+      @mutex.synchronize { @jobs.size }
+    end
+
+    def find_job(name)
+      return nil if name.nil?
+
+      @mutex.synchronize { @jobs.find { |j| j.name == name } }
+    end
+
+    def cancel(name)
+      return false if name.nil?
+
+      @mutex.synchronize do
+        before = @jobs.size
+        @jobs.reject! { |j| j.name == name }
+        @jobs.size != before
+      end
+    end
+
+    def run_at(time, name: nil, &block)
+      raise ArgumentError, 'time must be a Time' unless time.is_a?(Time)
+      raise ArgumentError, 'block required' unless block
+
+      job = Job.new(
+        callable: block,
+        run_at: time,
+        name: name
+      )
+      @mutex.synchronize { @jobs << job }
+      job
+    end
+
+    def pause(name)
+      job = find_job(name)
+      return false unless job
+
+      job.paused = true
+      true
+    end
+
+    def resume(name)
+      job = find_job(name)
+      return false unless job
+
+      job.paused = false
+      true
+    end
+
+    def paused?(name)
+      job = find_job(name)
+      return false unless job
+
+      job.paused?
+    end
+
     private
 
     def parse_interval(value)
