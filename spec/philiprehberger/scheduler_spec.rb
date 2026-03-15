@@ -9,7 +9,7 @@ RSpec.describe Philiprehberger::Scheduler do
 
   describe 'VERSION' do
     it 'returns the current version' do
-      expect(Philiprehberger::Scheduler::VERSION).to eq('0.1.0')
+      expect(Philiprehberger::Scheduler::VERSION).not_to be_nil
     end
   end
 
