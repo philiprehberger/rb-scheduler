@@ -6,7 +6,7 @@ Gem::Specification.new do |spec|
   spec.name = 'philiprehberger-scheduler'
   spec.version = Philiprehberger::Scheduler::VERSION
   spec.authors = ['Philip Rehberger']
-  spec.email = ['philiprehberger@gmail.com']
+  spec.email = ['me@philiprehberger.com']
 
   spec.summary = 'Lightweight in-process task scheduler with cron and interval support'
   spec.description = 'A lightweight in-process task scheduler for Ruby. ' \
@@ -20,6 +20,7 @@ Gem::Specification.new do |spec|
     'homepage_uri' => spec.homepage,
     'source_code_uri' => spec.homepage,
     'changelog_uri' => "#{spec.homepage}/blob/main/CHANGELOG.md",
+    'bug_tracker_uri' => "#{spec.homepage}/issues",
     'rubygems_mfa_required' => 'true'
   }
 
