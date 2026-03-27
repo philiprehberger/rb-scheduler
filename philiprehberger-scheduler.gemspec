@@ -8,7 +8,7 @@ Gem::Specification.new do |spec|
   spec.authors = ['Philip Rehberger']
   spec.email = ['me@philiprehberger.com']
 
-  spec.summary = 'Lightweight in-process task scheduler with cron and interval support'
+  spec.summary = 'Lightweight in-process task scheduler with cron and interval support for Ruby'
   spec.description = 'A lightweight in-process task scheduler for Ruby. ' \
                      'Schedule recurring tasks using simple intervals or cron ' \
                      'expressions with overlap prevention and graceful shutdown.'

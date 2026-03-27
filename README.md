@@ -3,6 +3,7 @@
 [![Tests](https://github.com/philiprehberger/rb-scheduler/actions/workflows/ci.yml/badge.svg)](https://github.com/philiprehberger/rb-scheduler/actions/workflows/ci.yml)
 [![Gem Version](https://badge.fury.io/rb/philiprehberger-scheduler.svg)](https://rubygems.org/gems/philiprehberger-scheduler)
 [![License](https://img.shields.io/github/license/philiprehberger/rb-scheduler)](LICENSE)
+[![Sponsor](https://img.shields.io/badge/sponsor-GitHub%20Sponsors-ec6cb9)](https://github.com/sponsors/philiprehberger)
 
 Lightweight in-process task scheduler with cron and interval support
 
@@ -193,4 +194,4 @@ bundle exec rubocop
 
 ## License
 
-MIT
+[MIT](LICENSE)
