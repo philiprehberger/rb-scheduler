@@ -43,12 +43,43 @@ module Philiprehberger
       end
 
       def fire_due_jobs(now)
-        @mutex.synchronize { @jobs.dup }.each do |job|
+        jobs = @mutex.synchronize { @jobs.dup }
+        jobs_by_name = build_name_index(jobs)
+
+        jobs.each do |job|
           next unless job.due?(now)
           next if job.running && !job.overlap?
+          next if dependency_pending?(job, jobs_by_name)
 
-          Thread.new { job.execute }
+          input = resolve_input(job, jobs_by_name)
+          Thread.new { job.execute(input) }
         end
+      end
+
+      def build_name_index(jobs)
+        index = {}
+        jobs.each do |job|
+          index[job.name] = job if job.name
+        end
+        index
+      end
+
+      def dependency_pending?(job, jobs_by_name)
+        return false unless job.depends_on
+
+        dep = jobs_by_name[job.depends_on]
+        return true unless dep
+        return true if dep.last_run.nil?
+        return true if dep.running
+
+        false
+      end
+
+      def resolve_input(job, jobs_by_name)
+        return nil unless job.input_from
+
+        source = jobs_by_name[job.input_from]
+        source&.last_result
       end
     end
   end
