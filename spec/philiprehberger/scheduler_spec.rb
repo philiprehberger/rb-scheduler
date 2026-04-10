@@ -715,4 +715,48 @@ RSpec.describe Philiprehberger::Scheduler do
       expect(parser.matches?(Time.new(2026, 1, 1, 0, 2, 0))).to be(false)
     end
   end
+
+  describe '#on_error' do
+    subject(:scheduler) { Philiprehberger::Scheduler.new }
+
+    after { scheduler.stop }
+
+    it 'calls the error handler when a job raises' do
+      errors = []
+      scheduler.on_error { |job, error| errors << [job.name, error.message] }
+      scheduler.every(0.1, name: 'failing') { raise 'boom' }
+      scheduler.start
+      sleep 0.6
+      expect(errors).not_to be_empty
+      expect(errors.first).to eq(%w[failing boom])
+    end
+
+    it 'sets last_error on the job' do
+      scheduler.every(0.1, name: 'err_job') { raise 'oops' }
+      scheduler.start
+      sleep 0.6
+      job = scheduler.jobs.find { |j| j.name == 'err_job' }
+      expect(job.last_error).to be_a(RuntimeError)
+      expect(job.last_error.message).to eq('oops')
+    end
+
+    it 'clears last_error on successful run' do
+      call_count = 0
+      scheduler.every(0.1, name: 'recover') do
+        call_count += 1
+        raise 'fail' if call_count == 1
+      end
+      scheduler.start
+      sleep 0.6
+      job = scheduler.jobs.find { |j| j.name == 'recover' }
+      expect(job.last_error).to be_nil
+    end
+
+    it 'does not crash when no error handler is registered' do
+      scheduler.every(0.1) { raise 'ignored' }
+      scheduler.start
+      sleep 0.5
+      expect(scheduler.running?).to be(true)
+    end
+  end
 end

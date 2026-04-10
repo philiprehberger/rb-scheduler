@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-04-09
+
+### Added
+- `Scheduler#on_error(&block)` callback receiving `(job, error)` when a job raises
+- `Job#last_error` stores the most recent exception (cleared on next successful run)
+- `Job#to_state` includes `last_error` message for persistence
+
 ## [0.2.2] - 2026-03-31
 
 ### Added
