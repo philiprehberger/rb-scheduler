@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-04-15
+
+### Added
+- `Scheduler#cancel(name)` removes a named job from the scheduler
+- `Scheduler#pause(name)`, `Scheduler#resume(name)`, and `Scheduler#paused?(name)` toggle per-job pause state without removing the job
+- `Scheduler#run_at(time, &block)` schedules a one-shot job that fires once at a given `Time` and is removed after execution
+- `Scheduler#job_count` returns the number of registered jobs
+- `Scheduler#find_job(name)` looks up a job by name
+- `Job#run_at` / `Job#run_at?` expose the one-shot target time
+- `Job#paused?` reflects pause state; `Job#to_state` and `Job#restore_state` persist it
+
 ## [0.3.0] - 2026-04-09
 
 ### Added
@@ -83,3 +94,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Interval-based scheduling
 - Overlap prevention
 - Graceful shutdown with in-flight completion
+
+[Unreleased]: https://github.com/philiprehberger/rb-scheduler/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/philiprehberger/rb-scheduler/compare/v0.3.0...v0.4.0
+[0.3.0]: https://github.com/philiprehberger/rb-scheduler/compare/v0.2.2...v0.3.0
+[0.2.2]: https://github.com/philiprehberger/rb-scheduler/compare/v0.2.1...v0.2.2
+[0.2.1]: https://github.com/philiprehberger/rb-scheduler/compare/v0.2.0...v0.2.1
+[0.2.0]: https://github.com/philiprehberger/rb-scheduler/compare/v0.1.8...v0.2.0
+[0.1.8]: https://github.com/philiprehberger/rb-scheduler/compare/v0.1.7...v0.1.8
+[0.1.7]: https://github.com/philiprehberger/rb-scheduler/compare/v0.1.6...v0.1.7
+[0.1.6]: https://github.com/philiprehberger/rb-scheduler/compare/v0.1.5...v0.1.6
+[0.1.5]: https://github.com/philiprehberger/rb-scheduler/compare/v0.1.4...v0.1.5
+[0.1.4]: https://github.com/philiprehberger/rb-scheduler/compare/v0.1.3...v0.1.4
+[0.1.3]: https://github.com/philiprehberger/rb-scheduler/compare/v0.1.2...v0.1.3
+[0.1.2]: https://github.com/philiprehberger/rb-scheduler/compare/v0.1.0...v0.1.2
+[0.1.0]: https://github.com/philiprehberger/rb-scheduler/releases/tag/v0.1.0

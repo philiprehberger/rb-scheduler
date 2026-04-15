@@ -759,4 +759,162 @@ RSpec.describe Philiprehberger::Scheduler do
       expect(scheduler.running?).to be(true)
     end
   end
+
+  describe '#job_count' do
+    it 'returns zero when no jobs are scheduled' do
+      expect(scheduler.job_count).to eq(0)
+    end
+
+    it 'returns the number of scheduled jobs' do
+      scheduler.every('1s') { nil }
+      scheduler.every('2s') { nil }
+      scheduler.cron('* * * * *') { nil }
+      expect(scheduler.job_count).to eq(3)
+    end
+  end
+
+  describe '#find_job' do
+    it 'returns the job with the given name' do
+      scheduler.every('1s', name: 'alpha') { nil }
+      scheduler.every('2s', name: 'beta') { nil }
+      expect(scheduler.find_job('beta').name).to eq('beta')
+    end
+
+    it 'returns nil for an unknown name' do
+      scheduler.every('1s', name: 'alpha') { nil }
+      expect(scheduler.find_job('missing')).to be_nil
+    end
+
+    it 'returns nil when given nil' do
+      expect(scheduler.find_job(nil)).to be_nil
+    end
+  end
+
+  describe '#cancel' do
+    it 'removes a job by name' do
+      scheduler.every('1s', name: 'ephemeral') { nil }
+      scheduler.every('1s', name: 'keeper') { nil }
+      expect(scheduler.cancel('ephemeral')).to be(true)
+      expect(scheduler.job_count).to eq(1)
+      expect(scheduler.find_job('ephemeral')).to be_nil
+    end
+
+    it 'returns false for an unknown name' do
+      scheduler.every('1s', name: 'keeper') { nil }
+      expect(scheduler.cancel('unknown')).to be(false)
+      expect(scheduler.job_count).to eq(1)
+    end
+
+    it 'returns false when name is nil' do
+      expect(scheduler.cancel(nil)).to be(false)
+    end
+
+    it 'prevents a cancelled job from firing' do
+      called = false
+      scheduler.every(0.1, name: 'cancel_me') { called = true }
+      scheduler.cancel('cancel_me')
+      scheduler.start
+      sleep(0.4)
+      scheduler.stop
+      expect(called).to be(false)
+    end
+  end
+
+  describe '#pause, #resume, #paused?' do
+    it 'pauses a job so it does not fire' do
+      counter = 0
+      mutex = Mutex.new
+      scheduler.every(0.1, name: 'tick') { mutex.synchronize { counter += 1 } }
+      scheduler.pause('tick')
+      scheduler.start
+      sleep(0.5)
+      scheduler.stop
+      expect(counter).to eq(0)
+      expect(scheduler.paused?('tick')).to be(true)
+    end
+
+    it 'resumes a paused job' do
+      counter = 0
+      mutex = Mutex.new
+      scheduler.every(0.1, name: 'tick') { mutex.synchronize { counter += 1 } }
+      scheduler.pause('tick')
+      scheduler.start
+      sleep(0.3)
+      scheduler.resume('tick')
+      sleep(0.4)
+      scheduler.stop
+      expect(counter).to be >= 1
+      expect(scheduler.paused?('tick')).to be(false)
+    end
+
+    it 'returns true when pausing an existing job' do
+      scheduler.every('1s', name: 'tick') { nil }
+      expect(scheduler.pause('tick')).to be(true)
+    end
+
+    it 'returns false when pausing an unknown job' do
+      expect(scheduler.pause('unknown')).to be(false)
+    end
+
+    it 'returns false when resuming an unknown job' do
+      expect(scheduler.resume('unknown')).to be(false)
+    end
+
+    it 'returns false for paused? when job is not found' do
+      expect(scheduler.paused?('unknown')).to be(false)
+    end
+
+    it 'defaults paused? to false for new jobs' do
+      scheduler.every('1s', name: 'tick') { nil }
+      expect(scheduler.paused?('tick')).to be(false)
+    end
+  end
+
+  describe '#run_at' do
+    it 'schedules a one-shot job and returns a Job' do
+      job = scheduler.run_at(Time.now + 60) { nil }
+      expect(job).to be_a(Philiprehberger::Scheduler::Job)
+      expect(job.run_at?).to be(true)
+    end
+
+    it 'stores the target time on the job' do
+      target = Time.now + 120
+      job = scheduler.run_at(target) { nil }
+      expect(job.run_at).to eq(target)
+    end
+
+    it 'accepts a name option' do
+      job = scheduler.run_at(Time.now + 60, name: 'once') { nil }
+      expect(job.name).to eq('once')
+    end
+
+    it 'is not due before the target time' do
+      job = scheduler.run_at(Time.now + 60) { nil }
+      expect(job.due?(Time.now)).to be(false)
+    end
+
+    it 'is due after the target time' do
+      job = scheduler.run_at(Time.now - 1) { nil }
+      expect(job.due?(Time.now)).to be(true)
+    end
+
+    it 'fires once and then is removed from the job list' do
+      called = 0
+      mutex = Mutex.new
+      scheduler.run_at(Time.now + 0.1, name: 'one_shot') { mutex.synchronize { called += 1 } }
+      scheduler.start
+      sleep(0.8)
+      scheduler.stop
+      expect(called).to eq(1)
+      expect(scheduler.find_job('one_shot')).to be_nil
+    end
+
+    it 'raises ArgumentError when time is not a Time' do
+      expect { scheduler.run_at('soon') { nil } }.to raise_error(ArgumentError)
+    end
+
+    it 'raises ArgumentError when no block is given' do
+      expect { scheduler.run_at(Time.now + 10) }.to raise_error(ArgumentError)
+    end
+  end
 end
