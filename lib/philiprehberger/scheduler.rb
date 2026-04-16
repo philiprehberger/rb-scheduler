@@ -137,6 +137,30 @@ module Philiprehberger
       job.paused?
     end
 
+    # Return an array of upcoming runs across all scheduled jobs, sorted by
+    # +:next_run_at+ ascending. Each entry is a hash:
+    #   { job_id:, job_name:, next_run_at: }
+    #
+    # Jobs that will never fire again after +from+ are excluded. When +limit+
+    # is +nil+, returns every upcoming run.
+    def next_runs(limit: 10, from: Time.now)
+      jobs_snapshot = @mutex.synchronize { @jobs.dup }
+
+      entries = jobs_snapshot.filter_map do |job|
+        next_at = job.next_run_at(from)
+        next nil unless next_at
+
+        {
+          job_id: job.object_id,
+          job_name: job.name,
+          next_run_at: next_at
+        }
+      end
+
+      sorted = entries.sort_by { |entry| entry[:next_run_at] }
+      limit.nil? ? sorted : sorted.first(limit)
+    end
+
     private
 
     def parse_interval(value)

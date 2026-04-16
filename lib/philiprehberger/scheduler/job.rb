@@ -74,6 +74,18 @@ module Philiprehberger
         @last_run = Time.now
       end
 
+      # Return the next Time this job will fire at or after +from+, or +nil+
+      # if the job will never fire again (e.g. a one-shot run_at job whose
+      # target time has already passed, or a paused job).
+      def next_run_at(from)
+        return nil if paused?
+        return next_run_at_for_run_at(from) if run_at?
+        return next_run_at_for_interval(from) if interval?
+        return next_run_at_for_cron(from) if cron?
+
+        nil
+      end
+
       def to_state
         {
           'name' => @name,
@@ -145,6 +157,35 @@ module Philiprehberger
         return false unless @last_run.nil?
 
         now >= @run_at
+      end
+
+      def next_run_at_for_run_at(_from)
+        return nil unless @last_run.nil?
+
+        @run_at
+      end
+
+      def next_run_at_for_interval(from)
+        return from if @last_run.nil?
+
+        candidate = @last_run + @interval
+        candidate = from if candidate < from
+        candidate
+      end
+
+      def next_run_at_for_cron(from)
+        offset = @timezone ? parse_timezone_offset(@timezone) : nil
+        start = from
+        # scan forward up to 4 years, minute-by-minute, to find the next match
+        cursor = Time.at(start.to_i - (start.to_i % 60))
+        cursor += 60 if cursor < start
+        (4 * 366 * 24 * 60).times do
+          candidate = offset ? (cursor.getutc + offset) : cursor
+          return cursor if @cron.matches?(candidate)
+
+          cursor += 60
+        end
+        nil
       end
     end
   end

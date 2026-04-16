@@ -222,6 +222,28 @@ scheduler.jobs.each do |job|
 end
 ```
 
+### Inspecting Upcoming Runs
+
+Use `#next_runs` to preview upcoming job runs across the whole scheduler, sorted by when they will fire. Each entry is a hash containing the job identity (`job_id`, `job_name`) and the computed `next_run_at` time. Jobs that will never fire again after `from` (e.g. a one-shot `run_at` job that has already run) are excluded.
+
+```ruby
+require "philiprehberger/scheduler"
+
+scheduler = Philiprehberger::Scheduler.new
+scheduler.every('5m', name: 'heartbeat') { ping }
+scheduler.cron('0 9 * * *', name: 'digest')  { send_digest }
+scheduler.run_at(Time.now + 3600, name: 'reminder') { remind }
+
+scheduler.next_runs(limit: 3, from: Time.now)
+# => [
+#   { job_id: 123, job_name: 'heartbeat', next_run_at: 2026-04-16 10:05:00 ... },
+#   { job_id: 456, job_name: 'reminder',  next_run_at: 2026-04-16 11:00:00 ... },
+#   { job_id: 789, job_name: 'digest',    next_run_at: 2026-04-17 09:00:00 ... }
+# ]
+
+scheduler.next_runs(limit: nil) # all upcoming runs
+```
+
 ### Error Handling
 
 Each job runs in its own thread. If a job raises an exception, only that thread is affected -- other jobs and the scheduler itself continue running. Register an `on_error` callback to observe failures across all jobs without wrapping each block in a rescue:
@@ -339,6 +361,7 @@ Jobs can be added both before and after calling `#start`. The scheduler checks f
 | `#stop(timeout)` | `timeout` -- `Numeric` (default `5`, seconds to wait for thread shutdown) | `self` | Gracefully stops the scheduler |
 | `#running?` | -- | `Boolean` | Returns `true` if the scheduler background thread is alive |
 | `#jobs` | -- | `Array<Job>` | Returns a duplicated snapshot of all registered jobs |
+| `#next_runs(limit:, from:)` | `limit:` -- `Integer` or `nil` (default `10`); `from:` -- `Time` (default `Time.now`) | `Array<Hash>` | Returns `{ job_id:, job_name:, next_run_at: }` entries sorted by `next_run_at` ascending across all jobs |
 | `#job_count` | -- | `Integer` | Returns the number of registered jobs |
 | `#find_job(name)` | `name` -- `String` | `Job` or `nil` | Returns the job with the given name, or `nil` |
 | `#cancel(name)` | `name` -- `String` | `Boolean` | Removes the named job; returns `true` on success |
@@ -368,6 +391,7 @@ Jobs can be added both before and after calling `#start`. The scheduler checks f
 | `#run_at?` | `Boolean` | Returns `true` if this is a one-shot `run_at` job |
 | `#paused?` | `Boolean` | Returns `true` if the job is paused |
 | `#due?(now)` | `Boolean` | Whether the job is due for execution at the given time |
+| `#next_run_at(from)` | `Time` or `nil` | Next time the job will fire at or after `from`, or `nil` if it will never fire again |
 | `#last_run` | `Time` or `nil` | Timestamp of the most recent execution |
 | `#last_result` | `Object` or `nil` | Return value from the most recent execution |
 | `#last_error` | `StandardError` or `nil` | Most recent exception (cleared on success) |
