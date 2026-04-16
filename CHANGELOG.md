@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-04-16
+
+### Added
+- `Scheduler#next_runs(limit: 10, from: Time.now)` returns an array of `{ job_id:, job_name:, next_run_at: }` hashes sorted by `next_run_at` ascending across all scheduled jobs (interval, cron, and `run_at`); jobs that will never fire again after `from` are excluded, and passing `limit: nil` returns every upcoming run
+- `Job#next_run_at(from)` returns the next `Time` this job will fire at or after `from`, or `nil` if it will never fire again
+
 ## [0.4.0] - 2026-04-15
 
 ### Added
@@ -95,7 +101,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Overlap prevention
 - Graceful shutdown with in-flight completion
 
-[Unreleased]: https://github.com/philiprehberger/rb-scheduler/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/philiprehberger/rb-scheduler/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/philiprehberger/rb-scheduler/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/philiprehberger/rb-scheduler/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/philiprehberger/rb-scheduler/compare/v0.2.2...v0.3.0
 [0.2.2]: https://github.com/philiprehberger/rb-scheduler/compare/v0.2.1...v0.2.2

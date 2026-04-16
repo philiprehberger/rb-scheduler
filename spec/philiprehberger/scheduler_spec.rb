@@ -536,6 +536,114 @@ RSpec.describe Philiprehberger::Scheduler do
     end
   end
 
+  describe '#next_runs' do
+    it 'returns an empty array when no jobs are scheduled' do
+      expect(scheduler.next_runs).to eq([])
+    end
+
+    it 'returns entries with job_id, job_name, and next_run_at keys' do
+      scheduler.every('5m', name: 'heartbeat') { nil }
+      result = scheduler.next_runs
+      expect(result.length).to eq(1)
+      entry = result.first
+      expect(entry.keys).to match_array(%i[job_id job_name next_run_at])
+      expect(entry[:job_name]).to eq('heartbeat')
+      expect(entry[:next_run_at]).to be_a(Time)
+    end
+
+    it 'includes interval, cron, and run_at jobs' do
+      from = Time.new(2026, 4, 16, 8, 0, 0)
+      scheduler.every('10m', name: 'poll') { nil }
+      scheduler.cron('0 9 * * *', name: 'digest') { nil }
+      scheduler.run_at(Time.new(2026, 4, 16, 12, 0, 0), name: 'once') { nil }
+
+      result = scheduler.next_runs(from: from)
+      names = result.map { |entry| entry[:job_name] }
+      expect(names).to match_array(%w[poll digest once])
+    end
+
+    it 'sorts entries by next_run_at ascending' do
+      from = Time.new(2026, 4, 16, 8, 0, 0)
+      scheduler.cron('0 12 * * *', name: 'noon') { nil }
+      scheduler.cron('0 9 * * *', name: 'morning') { nil }
+      scheduler.cron('0 15 * * *', name: 'afternoon') { nil }
+
+      result = scheduler.next_runs(from: from)
+      expect(result.map { |e| e[:job_name] }).to eq(%w[morning noon afternoon])
+      result.each_cons(2) do |a, b|
+        expect(a[:next_run_at]).to be <= b[:next_run_at]
+      end
+    end
+
+    it 'respects the limit option' do
+      scheduler.every('1m', name: 'a') { nil }
+      scheduler.every('2m', name: 'b') { nil }
+      scheduler.every('3m', name: 'c') { nil }
+
+      expect(scheduler.next_runs(limit: 2).length).to eq(2)
+    end
+
+    it 'returns all upcoming runs when limit is nil' do
+      15.times { |i| scheduler.every('1m', name: "job_#{i}") { nil } }
+      expect(scheduler.next_runs(limit: nil).length).to eq(15)
+    end
+
+    it 'defaults limit to 10' do
+      15.times { |i| scheduler.every('1m', name: "job_#{i}") { nil } }
+      expect(scheduler.next_runs.length).to eq(10)
+    end
+
+    it 'excludes one-shot run_at jobs that have already fired (last_run set)' do
+      from = Time.new(2026, 4, 16, 8, 0, 0)
+      job = scheduler.run_at(Time.new(2026, 4, 16, 12, 0, 0), name: 'once') { nil }
+      job.last_run = Time.new(2026, 4, 16, 12, 0, 1)
+
+      result = scheduler.next_runs(from: from)
+      expect(result.map { |e| e[:job_name] }).not_to include('once')
+    end
+
+    it 'includes future run_at jobs' do
+      from = Time.new(2026, 4, 16, 8, 0, 0)
+      target = Time.new(2026, 4, 16, 9, 0, 0)
+      scheduler.run_at(target, name: 'soon') { nil }
+
+      result = scheduler.next_runs(from: from)
+      entry = result.find { |e| e[:job_name] == 'soon' }
+      expect(entry).not_to be_nil
+      expect(entry[:next_run_at]).to eq(target)
+    end
+
+    it 'excludes paused jobs' do
+      scheduler.every('1m', name: 'alive') { nil }
+      scheduler.every('1m', name: 'sleeping') { nil }
+      scheduler.pause('sleeping')
+
+      result = scheduler.next_runs
+      names = result.map { |e| e[:job_name] }
+      expect(names).to include('alive')
+      expect(names).not_to include('sleeping')
+    end
+
+    it 'computes next_run_at for interval jobs that have already run at least once' do
+      job = scheduler.every('5m', name: 'poll') { nil }
+      last = Time.new(2026, 4, 16, 8, 0, 0)
+      job.last_run = last
+      from = Time.new(2026, 4, 16, 8, 1, 0)
+
+      result = scheduler.next_runs(from: from)
+      entry = result.find { |e| e[:job_name] == 'poll' }
+      expect(entry[:next_run_at]).to eq(last + 300)
+    end
+
+    it 'uses object_id as job_id for unnamed jobs' do
+      job = scheduler.every('1m') { nil }
+      result = scheduler.next_runs
+      entry = result.first
+      expect(entry[:job_name]).to be_nil
+      expect(entry[:job_id]).to eq(job.object_id)
+    end
+  end
+
   describe Philiprehberger::Scheduler::Job do
     it 'reports interval? correctly for interval jobs' do
       job = described_class.new(callable: -> {}, interval: 10)
