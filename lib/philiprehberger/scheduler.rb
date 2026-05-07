@@ -161,6 +161,17 @@ module Philiprehberger
       limit.nil? ? sorted : sorted.first(limit)
     end
 
+    # Return the array of jobs that are due to run at +now+. Useful for
+    # monitoring, dashboards, and tests that want to know which jobs would
+    # fire on the next tick without starting the scheduler.
+    #
+    # @param now [Time] the reference time to check against (default: now)
+    # @return [Array<Job>] jobs whose +due?(now)+ returns true
+    def due_jobs(now: Time.now)
+      jobs_snapshot = @mutex.synchronize { @jobs.dup }
+      jobs_snapshot.select { |job| job.due?(now) }
+    end
+
     private
 
     def parse_interval(value)

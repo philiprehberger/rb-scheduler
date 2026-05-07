@@ -644,6 +644,41 @@ RSpec.describe Philiprehberger::Scheduler do
     end
   end
 
+  describe '#due_jobs' do
+    it 'returns an empty array when no jobs are scheduled' do
+      expect(scheduler.due_jobs).to eq([])
+    end
+
+    it 'returns a job that is due immediately for an every(0) interval' do
+      scheduler.every(0, name: 'tick') { nil }
+      result = scheduler.due_jobs
+      expect(result.size).to eq(1)
+      expect(result.first).to be_a(Philiprehberger::Scheduler::Job)
+      expect(result.first.name).to eq('tick')
+    end
+
+    it 'excludes a future run_at job when called with the current time' do
+      future = Time.now + 3600
+      scheduler.run_at(future, name: 'later') { nil }
+      expect(scheduler.due_jobs.map(&:name)).not_to include('later')
+    end
+
+    it 'includes a run_at job when called with a time at or after its target' do
+      future = Time.now + 3600
+      scheduler.run_at(future, name: 'later') { nil }
+      result = scheduler.due_jobs(now: future + 1)
+      expect(result.map(&:name)).to include('later')
+    end
+
+    it 'returns Job objects with the correct names' do
+      scheduler.every(0, name: 'a') { nil }
+      scheduler.every(0, name: 'b') { nil }
+      result = scheduler.due_jobs
+      expect(result).to all(be_a(Philiprehberger::Scheduler::Job))
+      expect(result.map(&:name)).to match_array(%w[a b])
+    end
+  end
+
   describe Philiprehberger::Scheduler::Job do
     it 'reports interval? correctly for interval jobs' do
       job = described_class.new(callable: -> {}, interval: 10)

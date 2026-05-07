@@ -244,6 +244,23 @@ scheduler.next_runs(limit: 3, from: Time.now)
 scheduler.next_runs(limit: nil) # all upcoming runs
 ```
 
+### Inspecting Due Jobs
+
+Use `#due_jobs` to retrieve the array of jobs that are due to fire at a given time without starting the scheduler. Useful for monitoring, dashboards, and tests that want to see what would run on the next tick.
+
+```ruby
+require "philiprehberger/scheduler"
+
+scheduler = Philiprehberger::Scheduler.new
+scheduler.every('5m', name: 'heartbeat') { ping }
+scheduler.cron('0 9 * * *', name: 'digest') { send_digest }
+
+scheduler.due_jobs.each { |job| puts "due: #{job.name}" }
+
+# Check what will be due at a specific future time
+scheduler.due_jobs(now: Time.now + 3600)
+```
+
 ### Error Handling
 
 Each job runs in its own thread. If a job raises an exception, only that thread is affected -- other jobs and the scheduler itself continue running. Register an `on_error` callback to observe failures across all jobs without wrapping each block in a rescue:
@@ -362,6 +379,7 @@ Jobs can be added both before and after calling `#start`. The scheduler checks f
 | `#running?` | -- | `Boolean` | Returns `true` if the scheduler background thread is alive |
 | `#jobs` | -- | `Array<Job>` | Returns a duplicated snapshot of all registered jobs |
 | `#next_runs(limit:, from:)` | `limit:` -- `Integer` or `nil` (default `10`); `from:` -- `Time` (default `Time.now`) | `Array<Hash>` | Returns `{ job_id:, job_name:, next_run_at: }` entries sorted by `next_run_at` ascending across all jobs |
+| `#due_jobs(now:)` | `now:` -- `Time` (default `Time.now`) | `Array<Job>` | Returns jobs that are due to run at the given time |
 | `#job_count` | -- | `Integer` | Returns the number of registered jobs |
 | `#find_job(name)` | `name` -- `String` | `Job` or `nil` | Returns the job with the given name, or `nil` |
 | `#cancel(name)` | `name` -- `String` | `Boolean` | Removes the named job; returns `true` on success |
